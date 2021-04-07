@@ -11,6 +11,8 @@ let myGame = function(ele, row, col, mines) {
   this.mineNum = mines; // number of mine
   this.mineMatrix = [];
   this.isFirst = 1;
+  this.safeNum = this.rowNum * this.colNum - this.mineNum;
+  this.showMineNum = mines;
 };
 
 myGame.prototype = {
@@ -57,10 +59,10 @@ myGame.prototype = {
     if (game.mineMatrix[i][j].state === "unopened" || game.mineMatrix[i][j].state ==="markFlag" || game.mineMatrix[i][j].state === "markQuestion") {
       if (game.mineMatrix[i][j].state === "unopened") {
         game.drawGrid(i, j, "markFlag");
-        document.getElementById("myMines").innerHTML = (-- game.mineNum).toString();
+        document.getElementById("myMines").innerHTML = (-- game.showMineNum).toString();
       } else if (game.mineMatrix[i][j].state === "markFlag") {
         game.drawGrid(i, j, "markQuestion");
-        document.getElementById("myMines").innerHTML = (++ game.mineNum).toString();
+        document.getElementById("myMines").innerHTML = (++ game.showMineNum).toString();
       } else if (game.mineMatrix[i][j].state === "markQuestion") {
         game.drawGrid(i, j, "unopened");
       }
@@ -154,6 +156,15 @@ myGame.prototype = {
       markFlag: '#DD8998',
       markQuestion: '#708EC4',
     }; // Set their own styles for each grid
+    if ((typeof stateTypes[state] === "number" || state === "noBomb") && this.mineMatrix[i][j].state === "unopened") {
+      this.safeNum --;
+      if (this.safeNum === 0) {
+        game.stopTimer(); // Stop the Timer
+        alert("Game wins! Congratulations!");
+        game.canvasEle.onclick = null;
+        game.canvasEle.oncontextmenu = null;
+      }
+    }
     if (typeof stateTypes[state] === "string") {
       with (this.canvasContext) {
         fillStyle = stateTypes[state];
