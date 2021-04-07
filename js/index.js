@@ -1,3 +1,4 @@
+let game = null;
 let timer = null; // The timer
 
 // basic settings of my game
@@ -40,68 +41,65 @@ myGame.prototype = {
       }
     }
   },
-  canvasEvents: function () {
-    this.canvasEle.addEventListener('contextmenu', function(e) {
-      e.preventDefault();
-      let x, y;
-      if (e.layerX || e.layerX === 0) {
-        x = e.layerX;
-        y = e.layerY;
-      } else if (e.offsetX || e.offsetX === 0) { // Opera compatible
-        x = e.offsetX;
-        y = e.offsetY;
+  contextmenuHandle: function(e) {
+    e.preventDefault();
+    let x, y;
+    if (e.layerX || e.layerX === 0) {
+      x = e.layerX;
+      y = e.layerY;
+    } else if (e.offsetX || e.offsetX === 0) { // Opera compatible
+      x = e.offsetX;
+      y = e.offsetY;
+    }
+    const arrPos = game.getArrPos(x, y); // Get the position i and j
+    const i = arrPos.i;
+    const j = arrPos.j;
+    if (game.mineMatrix[i][j].state === "unopened" || game.mineMatrix[i][j].state ==="markFlag" || game.mineMatrix[i][j].state === "markQuestion") {
+      if (game.mineMatrix[i][j].state === "unopened") {
+        game.drawGrid(i, j, "markFlag");
+        document.getElementById("myMines").innerHTML = (-- game.mineNum).toString();
+      } else if (game.mineMatrix[i][j].state === "markFlag") {
+        game.drawGrid(i, j, "markQuestion");
+        document.getElementById("myMines").innerHTML = (++ game.mineNum).toString();
+      } else if (game.mineMatrix[i][j].state === "markQuestion") {
+        game.drawGrid(i, j, "unopened");
       }
-      const arrPos = this.getArrPos(x, y); // Get the position i and j
-      const i = arrPos.i;
-      const j = arrPos.j;
-      if (this.mineMatrix[i][j].state === "unopened" || this.mineMatrix[i][j].state ==="markFlag" || this.mineMatrix[i][j].state === "markQuestion") {
-        if (this.mineMatrix[i][j].state === "unopened") {
-          this.drawGrid(i, j, "markFlag");
-          document.getElementById("myMines").innerHTML = (-- this.mineNum).toString();
-        } else if (this.mineMatrix[i][j].state === "markFlag") {
-          this.drawGrid(i, j, "markQuestion");
-          document.getElementById("myMines").innerHTML = (++ this.mineNum).toString();
-        } else if (this.mineMatrix[i][j].state === "markQuestion") {
-          this.drawGrid(i, j, "unopened");
-        }
-      }
-    }.bind(this));
-
-    this.canvasEle.addEventListener('click', function(e) {
-      if (this.isFirst === 1) { // If is the first click
-        this.isFirst = 0;
-        this.startTimer(); // Start the timer
-      }
-      let x, y;
-      if (e.layerX || e.layerX === 0) {
-        x = e.layerX;
-        y = e.layerY;
-      } else if (e.offsetX || e.offsetX === 0) { // Opera compatible
-        x = e.offsetX;
-        y = e.offsetY;
-      }
-      const arrPos = this.getArrPos(x, y); // Get the position i and j
-      const i = arrPos.i;
-      const j = arrPos.j;
-      if (this.mineMatrix[i][j].state === "unopened") {
-        if (this.mineMatrix[i][j].bomb === 1) {
-          this.stopTimer(); // Stop the Timer
-          alert("踩雷啦！请重新刷新开始。");
-          for (let a = 0; a < this.rowNum; a++) {
-            for (let b = 0; b < this.colNum; b++) {
-              if (this.mineMatrix[a][b].bomb === 1) {
-                this.drawGrid(a, b, "isBomb");
-              }
+    }
+  },
+  clickHandle: function(e) {
+    if (game.isFirst === 1) { // If is the first click
+      game.isFirst = 0;
+      game.startTimer(); // Start the timer
+    }
+    let x, y;
+    if (e.layerX || e.layerX === 0) {
+      x = e.layerX;
+      y = e.layerY;
+    } else if (e.offsetX || e.offsetX === 0) { // Opera compatible
+      x = e.offsetX;
+      y = e.offsetY;
+    }
+    const arrPos = game.getArrPos(x, y); // Get the position i and j
+    const i = arrPos.i;
+    const j = arrPos.j;
+    if (game.mineMatrix[i][j].state === "unopened") {
+      if (game.mineMatrix[i][j].bomb === 1) {
+        game.stopTimer(); // Stop the Timer
+        alert("Step on the mine! Please start a new game! ");
+        for (let a = 0; a < game.rowNum; a++) {
+          for (let b = 0; b < game.colNum; b++) {
+            if (game.mineMatrix[a][b].bomb === 1) {
+              game.drawGrid(a, b, "isBomb");
             }
           }
-        } else {
-          // Determine whether there are mines in 8 locations around
-          this.ifNearbyBomb(i, j);
         }
+        game.canvasEle.onclick = null;
+        game.canvasEle.oncontextmenu = null;
       } else {
-
+        // Determine whether there are mines in 8 locations around
+        game.ifNearbyBomb(i, j);
       }
-    }.bind(this));
+    } else {}
   },
   getArrPos: function(x, y) {
     let i, j;
@@ -186,7 +184,7 @@ myGame.prototype = {
       if (count < 10) { str = "00" + count.toString(); }
       else if (count < 100) { str = "0" + count.toString(); }
       else { str = count.toString(); }
-      document.getElementById("myClock").innerHTML = str;
+      document.getElementById("myTimer").innerHTML = str;
     }, 1000)
   },
   stopTimer: function() {
@@ -194,8 +192,50 @@ myGame.prototype = {
   }
 }
 
-window.onload = function() {
-  let game = new myGame(this.document.getElementById("myGame"), 16, 30, 99);
+function clickRadio() {
+  const radioArr = document.getElementsByName("level");
+  let level = "";
+  for (let i in radioArr) {
+    if (radioArr[i].checked === true) {
+      level = radioArr[i].parentElement.innerText;
+    }
+  }
+  switch (level) {
+    case "Easy":
+      document.getElementById("myPanel").style.display = 'none';
+      startGame(9, 9, 10);
+      break;
+    case "Medium" :
+      document.getElementById("myPanel").style.display = 'none';
+      startGame(16, 16, 40);
+      break;
+    case "Hard":
+      document.getElementById("myPanel").style.display = 'none';
+      startGame(16, 30, 99);
+      break;
+    case "": break;
+  }
+}
+
+function clickMenu() {
+  if (document.getElementById("myPanel").style.display == 'block') {
+    document.getElementById("myPanel").style.display = 'none';
+  } else {
+    document.getElementById("myPanel").style.display = 'block';
+  }
+}
+
+function startGame(row, col, mines) {
+  game = new myGame(document.getElementById("myGame"), row, col, mines);
   game.initGame();
-  game.canvasEvents();
+  game.canvasEle.onclick = game.clickHandle;
+  game.canvasEle.oncontextmenu = game.contextmenuHandle;
+  document.getElementById("myMines").innerHTML = game.mineNum.toString(); // Set Mines
+  // Set timer
+  game.stopTimer();
+  document.getElementById("myTimer").innerHTML = '000';
+}
+
+window.onload = function() {
+  startGame(16, 16, 40);
 };
