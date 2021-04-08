@@ -1,5 +1,5 @@
 let game = null;
-let timer = null; // The timer
+let timer = null;
 
 // basic settings of my game
 let myGame = function(ele, row, col, mines) {
@@ -9,10 +9,10 @@ let myGame = function(ele, row, col, mines) {
   this.rowNum = row; // number of rows
   this.colNum = col; // number of columns
   this.mineNum = mines; // number of mine
+  this.safeNum = this.rowNum * this.colNum - this.mineNum; // number of safe grids
+  this.showMineNum = mines;
   this.mineMatrix = [];
   this.isFirst = 1;
-  this.safeNum = this.rowNum * this.colNum - this.mineNum;
-  this.showMineNum = mines;
 };
 
 myGame.prototype = {
@@ -159,12 +159,12 @@ myGame.prototype = {
     if ((typeof stateTypes[state] === "number" || state === "noBomb") && this.mineMatrix[i][j].state === "unopened") {
       this.safeNum --;
       if (this.safeNum === 0) {
-        game.stopTimer(); // Stop the Timer
+        game.stopTimer();
         alert("Game wins! Congratulations!");
-        game.canvasEle.onclick = null;
-        game.canvasEle.oncontextmenu = null;
+        this.canvasEle.onclick = null;
+        this.canvasEle.oncontextmenu = null;
       }
-    }
+    } // Victory judgement
     if (typeof stateTypes[state] === "string") {
       with (this.canvasContext) {
         fillStyle = stateTypes[state];
@@ -210,19 +210,19 @@ function clickRadio() {
     if (radioArr[i].checked === true) {
       level = radioArr[i].parentElement.innerText;
     }
-  }
+  } // Get selected level from radioArr
   switch (level) {
     case "Easy":
       document.getElementById("myPanel").style.display = 'none';
-      startGame(9, 9, 10);
+      startGame(9, 9, 10); // Easy Level: 9 * 9 grids, 10mines
       break;
     case "Medium" :
       document.getElementById("myPanel").style.display = 'none';
-      startGame(16, 16, 40);
+      startGame(16, 16, 40); // Medium Level: 16 * 16 grids, 40mines
       break;
     case "Hard":
       document.getElementById("myPanel").style.display = 'none';
-      startGame(16, 30, 99);
+      startGame(16, 30, 99); // Hard Level: 16 * 30 grids, 99mines
       break;
     case "": break;
   }
@@ -239,14 +239,13 @@ function clickMenu() {
 function startGame(row, col, mines) {
   game = new myGame(document.getElementById("myGame"), row, col, mines);
   game.initGame();
-  game.canvasEle.onclick = game.clickHandle;
-  game.canvasEle.oncontextmenu = game.contextmenuHandle;
-  document.getElementById("myMines").innerHTML = game.mineNum.toString(); // Set Mines
-  // Set timer
+  game.canvasEle.onclick = game.clickHandle; // canvas's click event
+  game.canvasEle.oncontextmenu = game.contextmenuHandle; // canvas's contextmenu event
+  document.getElementById("myMines").innerHTML = game.mineNum.toString(); // Set 'Mines' text
   game.stopTimer();
-  document.getElementById("myTimer").innerHTML = '000';
+  document.getElementById("myTimer").innerHTML = '000'; // Set 'Timer' text
 }
 
 window.onload = function() {
-  startGame(16, 16, 40);
+  startGame(16, 16, 40); // Medium Level: 16 * 16 grids, 40mines
 };
